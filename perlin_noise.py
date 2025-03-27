@@ -102,8 +102,6 @@ if __name__ == "__main__":
 
     plt.figure(figsize=(8, 8))
     plt.imshow(heightmap, cmap="terrain")
-    plt.colorbar(label="Elevation")
-    plt.title("FBM and Perlin Noise Heatmap")
     plt.axis("off")
     plt.tight_layout()
     plt.savefig("fbm_heightmap.png", dpi=300)
