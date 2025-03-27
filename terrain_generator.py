@@ -1,19 +1,34 @@
+from dataclasses import dataclass, field
 import numpy as np
 import matplotlib.pyplot as plt
 import hashlib
 import math
 
-
+@dataclass
 class TerrainGenerator:
-    def __init__(self, width: int, height: int, scale: float, seed: int, octaves: int = 6, persistence: float = 0.5, lacunarity: float = 2.0):
-        self.width = width
-        self.height = height
-        self.scale = scale
-        self.seed = seed
-        self.octaves = octaves
-        self.persistence = persistence
-        self.lacunarity = lacunarity
-        self.heightmap: np.ndarray = np.zeros((height, width))
+    """
+    Parameters:
+    - width (int): Width of the generated heightmap.
+    - height (int): Height of the generated heightmap.
+    - scale (float): Controls the zoom level of the noise. Typical range: 0.005 – 0.05.
+    - seed (int): Seed value for deterministic noise generation.
+    - octaves (int): Number of noise layers. More octaves add detail. Typical range: 3 – 8.
+    - persistence (float): Controls amplitude decay across octaves. Lower = smoother terrain. Typical range: 0.3 – 0.7.
+    - lacunarity (float): Controls frequency growth across octaves. Higher = more texture. Typical range: 1.5 – 3.5.
+    """
+    width: int
+    height: int
+    scale: float
+    seed: int
+    octaves: int = 6
+    persistence: float = 0.45
+    lacunarity: float = 1.75
+
+    heightmap: np.ndarray = field(init=False)
+
+
+    def __post_init__(self):
+        self.heightmap = np.zeros((self.height, self.width))
 
 
     def _hash_seed(self, x: int, y: int) -> int:
@@ -104,8 +119,6 @@ class TerrainGenerator:
     def save_image(self, filename: str = "fbm_heightmap.png") -> None:
         plt.figure(figsize=(8, 8))
         plt.imshow(self.heightmap, cmap="terrain")
-        plt.colorbar(label="Elevation")
-        plt.title("FBM and Perlin Noise Heatmap")
         plt.axis("off")
         plt.tight_layout()
         plt.savefig(filename, dpi=300)
@@ -114,6 +127,6 @@ class TerrainGenerator:
 
 
 if __name__ == "__main__":
-    terrain = TerrainGenerator(width=100, height=100, scale=0.02, seed=42)
+    terrain = TerrainGenerator(width=100, height=100, scale=0.04, seed=72)
     terrain.generate_heightmap()
     terrain.save_image()
