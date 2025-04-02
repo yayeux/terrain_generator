@@ -81,6 +81,43 @@ class TerrainGenerator2D:
             frequency *= self.lacunarity
 
         return total / max_value
+    
+    def apply_thermal_erosion(self, talus_angle=0.025, erosion_rate=0.07, iterations=125) -> None:
+        total_change = 0.0
+
+        for _ in range(iterations):
+            new_heightmap = np.copy(self.heightmap)
+
+            for i in range(1, self.height - 1):
+                for j in range(1, self.width - 1):
+                    current_height = self.heightmap[i][j]
+                    neighbors = [
+                        (i-1, j), (i+1, j), (i, j-1), (i, j+1),
+                        (i-1, j-1), (i-1, j+1), (i+1, j-1), (i+1, j+1)
+                        ]
+
+                    deltas = []
+                    total_delta = 0.0
+
+                    for ni, nj in neighbors:
+                        neighbor_height = self.heightmap[ni][nj]
+                        slope = current_height - neighbor_height
+
+                        if slope > talus_angle:
+                            delta = slope - talus_angle
+                            deltas.append(((ni, nj), delta))
+                            total_delta += delta
+
+                    if total_delta > 0:
+                        for (ni, nj), delta in deltas:
+                            move = erosion_rate * (delta / total_delta) * (current_height * 0.5)
+                            new_heightmap[i][j] -= move
+                            new_heightmap[ni][nj] += move
+                            total_change += move
+
+            self.heightmap = new_heightmap
+
+        print(f"Total material moved: {total_change}")
 
 
     def generate_heightmap(self) -> None:
@@ -89,19 +126,20 @@ class TerrainGenerator2D:
                 x = j * self.scale
                 y = i * self.scale
                 self.heightmap[i][j] = self._fbm(x, y)
-
+ 
 
     def save_image(self, filename: str = "fbm_heightmap.png") -> None:
         plt.figure(figsize=(8, 8))
-        plt.imshow(self.heightmap, cmap="terrain")
+        plt.imshow(self.heightmap, cmap="terrain", interpolation="bilinear")
         plt.axis("off")
         plt.tight_layout()
-        plt.savefig(filename, dpi=300)
+        plt.savefig(filename, dpi=600)
         plt.close()
 
 
 
 if __name__ == "__main__":
-    terrain = TerrainGenerator2D(width=100, height=100, scale=0.04, seed=72)
+    terrain = TerrainGenerator2D(width=256, height=256, scale=0.03, seed=724891245)
     terrain.generate_heightmap()
+    terrain.apply_thermal_erosion()
     terrain.save_image()
